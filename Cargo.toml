@@ -1,0 +1,7 @@
+[package]
+name = "nine-mans-morris"
+version = "0.1.0"
+authors = ["aishsingh <contact@aishsingh.com>"]
+
+[dependencies]
+sdl2 = "0.19"
