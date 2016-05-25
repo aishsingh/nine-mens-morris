@@ -16,6 +16,7 @@ mod action;
 
 use piece::PlacedPiece;
 use action::PlaceAction;
+use action::ActionResult;
 
 
 static SCREEN_WIDTH: u32 = 800;
@@ -31,8 +32,7 @@ struct Game {
     sdl_renderer: sdl2::render::Renderer<'static>,
     sdl_font: sdl2_ttf::Font,
 
-    selection_active: bool,
-    selected_piece: piece::Piece
+    mill_mode: bool,
 }
 
 impl Game {
@@ -41,7 +41,13 @@ impl Game {
 
         let mut done = false;
         while !done { // Game loop
-            self.sdl_renderer.set_draw_color(Color::RGB(0, 0, 0));
+            if self.mill_mode {
+                self.sdl_renderer.set_draw_color(Color::RGB(80, 50, 50));
+            }
+            else {
+                self.sdl_renderer.set_draw_color(Color::RGB(0, 0, 0));
+            }
+
             self.sdl_renderer.clear();
 
             self.draw_board();
@@ -68,21 +74,38 @@ impl Game {
                     // println!("Mouse Down {} {}", x, y);
                 },
 
+                Event::MouseMotion{x, y, ..} => {
+
+                },
+
                 Event::MouseButtonUp{x, y, ..} => {
                     // Add up to 9 pieces
                     if self.players[self.turn as usize -1].total_pieces_count < 9 {
                         let inter: Vec<i32> = self.get_closest_inter(vec![x, y]);
                         if !inter.is_empty() { // mouse was near intersection
+                            if self.mill_mode {
+                                self.mill_mode = false;
+                            }
+
                             let p = piece::new(vec![inter[2], inter[3]], self.players[self.turn as usize -1].colour);
 
-                            if self.players[self.turn as usize -1].actions.place_piece(&p, &mut self.board, &inter) {
-                                self.players[self.turn as usize -1].add_piece(p);
-                                self.turn = if self.turn == 2 {1} else {2};
+                            match  self.players[self.turn as usize -1].actions.place_piece(&p, &mut self.board, &inter) {
+                            
+                                ActionResult::completed => {
+                                    self.players[self.turn as usize -1].add_piece(p);
+                                    self.turn = if self.turn == 2 {1} else {2};
+                                },
+
+                                ActionResult::mill_detected => {
+                                    self.players[self.turn as usize -1].add_piece(p);
+                                    self.turn = if self.turn == 2 {1} else {2};
+                                    self.mill_mode = true;
+                                    break;
+                                },
+
+                                ActionResult::stopped => {}
                             }
                         }
-                    }
-                    else if self.selection_active {
-                        // TODO
                     }
                 },
 
@@ -217,8 +240,7 @@ fn main() {
         sdl_context: context, 
         sdl_renderer: renderer, 
         sdl_font: font,
-        selection_active: false,
-        selected_piece: piece::new(vec![0, 0], Color::RGB(0, 0, 0))};
+        mill_mode: false};
 
     g.run();
 }

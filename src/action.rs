@@ -6,56 +6,64 @@ use piece;
 use piece::PlacedPiece;
 
 pub struct Action {
-    result: bool,
     // history: Vec<>
 }
 
+pub enum ActionResult {
+    completed,
+    stopped,
+    mill_detected
+}
+
 pub trait PlaceAction {
-    fn place_piece(&self, p: &piece::Piece, board: &mut Vec<Vec<PlacedPiece>>, inter: &Vec<i32>) -> bool;
+    fn place_piece(&self, p: &piece::Piece, board: &mut Vec<Vec<PlacedPiece>>, inter: &Vec<i32>) -> ActionResult;
 }
 
 pub trait MoveAction {
-    fn move_piece(&self, p: &piece::Piece) -> bool;
+    fn move_piece(&self, p: &piece::Piece) -> ActionResult;
 }
 
 pub trait JumpAction {
-    fn jump_piece(&self, p: &piece::Piece) -> bool;
+    fn jump_piece(&self, p: &piece::Piece) -> ActionResult;
 }
 
 impl PlaceAction for Action {
-    fn place_piece(&self, p: &piece::Piece, board: &mut Vec<Vec<PlacedPiece>>, inter: &Vec<i32>) -> bool {
+    fn place_piece(&self, p: &piece::Piece, board: &mut Vec<Vec<PlacedPiece>>, inter: &Vec<i32>) -> ActionResult {
         if self.is_inter_avail(vec![inter[0], inter[1]], &board) {
             board[inter[0] as usize][inter[1] as usize] = PlacedPiece::placed{p: *p};
 
             // detect mills
             if self.is_mill(&p, vec![inter[0], inter[1]], &board) {
                 println!("Mill created!");
+                return ActionResult::mill_detected;
             }
 
-            true
+            ActionResult::completed
         }
         else {
-            false
+            ActionResult::stopped
         }
     }
 }
 
 impl MoveAction for Action {
-    fn move_piece(&self, p: &piece::Piece) -> bool {
-        false
+    fn move_piece(&self, p: &piece::Piece) -> ActionResult {
+        ActionResult::stopped
     }
 }
 impl JumpAction for Action {
-    fn jump_piece(&self, p: &piece::Piece) -> bool {
-        false
+    fn jump_piece(&self, p: &piece::Piece) -> ActionResult {
+        ActionResult::stopped
     }
 }
 
 impl Action {
     fn is_inter_avail(&self, inter: Vec<i32>, board: &Vec<Vec<PlacedPiece>>) -> bool {
         match board[inter[0] as usize][inter[1] as usize] {
-            PlacedPiece::empty => true,
-            _ => false,
+            PlacedPiece::empty => true
+,
+            _ => false
+,
         }
     }
 
@@ -540,4 +548,4 @@ impl Action {
     }
 }
 
-pub fn new() -> Action { Action { result: false } }
+pub fn new() -> Action { Action {  } }
