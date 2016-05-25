@@ -13,6 +13,8 @@ use std::path::Path;
 mod player;
 mod piece;
 
+use piece::PlacedPiece;
+
 static SCREEN_WIDTH: u32 = 800;
 static SCREEN_HEIGHT: u32 = 600;
 static GAMEAREA_SIZE: u32 = 600;
@@ -20,14 +22,20 @@ static GAMEAREA_SIZE: u32 = 600;
 struct Game {
     turn: u8,
     players: Vec<player::Player>,
+    board: Vec<Vec<PlacedPiece>>,
 
     sdl_context: sdl2::Sdl,
     sdl_renderer: sdl2::render::Renderer<'static>,
-    sdl_font: sdl2_ttf::Font
+    sdl_font: sdl2_ttf::Font,
+
+    selection_active: bool,
+    selected_piece: piece::Piece
 }
 
 impl Game {
     pub fn run(&mut self) {
+        self.board = vec![vec![PlacedPiece::empty;  7]; 7];
+
         let mut done = false;
         while !done { // Game loop
             self.sdl_renderer.set_draw_color(Color::RGB(0, 0, 0));
@@ -62,11 +70,16 @@ impl Game {
 
                     // Add up to 9 pieces
                     if self.players[self.turn as usize -1].total_pieces_count < 9 {
-                        let intersection: Vec<i32> = self.get_closest_intersection(vec![x, y]);
-                        if !intersection.is_empty() {
-                            self.players[self.turn as usize -1].add_piece(piece::new(intersection));
+                        let inter: Vec<i32> = self.get_closest_inter(vec![x, y]);
+                        if !inter.is_empty() && self.is_inter_avail(vec![inter[0], inter[1]]) { // mouse was near available intersection
+                            let p = piece::new(vec![inter[2], inter[3]]);
+                            self.players[self.turn as usize -1].add_piece(p);
+                            self.board[inter[0] as usize][inter[1] as usize] = PlacedPiece::placed{p: p};
                             self.turn = if self.turn == 2 {1} else {2};
                         }
+                    }
+                    else if self.selection_active {
+                        // TODO
                     }
                 },
 
@@ -142,7 +155,7 @@ impl Game {
         self.sdl_renderer.copy(&mut texture, None, Some(target));
     }
 
-    fn get_closest_intersection(&self, pos: Vec<i32>) -> Vec<i32> {
+    fn get_closest_inter(&self, pos: Vec<i32>) -> Vec<i32> {
         let w = GAMEAREA_SIZE as i32;
         let h = GAMEAREA_SIZE as i32;
 
@@ -167,13 +180,20 @@ impl Game {
                 }
 
                 if (pos[0] - board[i][j][0]).abs() <= offset && (pos[1] - board[i][j][1]).abs() <= offset {
-                    return vec![board[i][j][0], board[i][j][1]];
+                    return vec![i as i32, j as i32, board[i][j][0], board[i][j][1]];
                 }
             }
         }
 
         // Not close enought to any intersection
         return vec![];
+    }
+
+    fn is_inter_avail(&self, inter: Vec<i32>) -> bool {
+        match self.board[inter[0] as usize][inter[1] as usize] {
+            PlacedPiece::empty => true,
+            _ => false,
+        }
     }
 }
 
@@ -196,9 +216,12 @@ fn main() {
 
     let mut g = Game {turn: 1, 
         players: vec![player::new(Color::RGB(225, 50, 50)), player::new(Color::RGB(55, 50, 255))], 
+        board: vec![],
         sdl_context: context, 
         sdl_renderer: renderer, 
-        sdl_font: font};
+        sdl_font: font,
+        selection_active: false,
+        selected_piece: piece::new(vec![0, 0])};
 
     g.run();
 }

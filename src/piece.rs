@@ -6,7 +6,13 @@ use sdl2::rect::Rect;
 #[derive(Copy,Clone)]
 pub struct Piece {
     x: i32,
-    y: i32
+    y: i32,
+}
+
+#[derive(Copy,Clone)]
+pub enum PlacedPiece {
+    placed { p: Piece },
+    empty
 }
 
 impl Piece {
