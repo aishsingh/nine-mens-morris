@@ -11,8 +11,7 @@ pub struct Piece {
 
 impl Piece {
     pub fn draw_piece(&self, renderer: &mut sdl2::render::Renderer) {
-        renderer.set_draw_color(Color::RGB(225, 50, 50));
-        renderer.fill_rect(Rect::new(self.x, self.y, 30, 30));
+        renderer.fill_rect(Rect::new(self.x - (30/2), self.y - (30/2), 30, 30));
     }
 }
 

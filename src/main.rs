@@ -17,13 +17,13 @@ static SCREEN_WIDTH: u32 = 800;
 static SCREEN_HEIGHT: u32 = 600;
 static GAMEAREA_SIZE: u32 = 600;
 
-pub struct Game {
+struct Game {
     turn: u8,
     players: Vec<player::Player>,
 
     sdl_context: sdl2::Sdl,
     sdl_renderer: sdl2::render::Renderer<'static>,
-    sdl_font: sdl2_ttf::Font,
+    sdl_font: sdl2_ttf::Font
 }
 
 impl Game {
@@ -36,6 +36,7 @@ impl Game {
             self.draw_board();
             self.draw_ui();
             self.players[0].draw_pieces(&mut self.sdl_renderer);
+            self.players[1].draw_pieces(&mut self.sdl_renderer);
 
             self.sdl_renderer.present();
 
@@ -58,6 +59,15 @@ impl Game {
 
                 Event::MouseButtonUp{x, y, ..} => {
                     println!("Mouse Up {} {}", x, y);
+
+                    // Add up to 9 pieces
+                    if self.players[self.turn as usize -1].total_pieces_count < 9 {
+                        let intersection: Vec<i32> = self.get_closest_intersection(vec![x, y]);
+                        if !intersection.is_empty() {
+                            self.players[self.turn as usize -1].add_piece(piece::new(intersection));
+                            self.turn = if self.turn == 2 {1} else {2};
+                        }
+                    }
                 },
 
                 _ => {}
@@ -79,12 +89,12 @@ impl Game {
                       [vec![(w/8)*1, (h/8)*6], vec![(w/8)*2, (h/8)*6], vec![(w/8)*3, (h/8)*6], vec![(w/8)*4, (h/8)*6], vec![(w/8)*5, (h/8)*6], vec![(w/8)*6, (h/8)*6], vec![(w/8)*7, (h/8)*6]],
                       [vec![(w/8)*1, (h/8)*7], vec![(w/8)*2, (h/8)*7], vec![(w/8)*3, (h/8)*7], vec![(w/8)*4, (h/8)*7], vec![(w/8)*5, (h/8)*7], vec![(w/8)*6, (h/8)*7], vec![(w/8)*7, (h/8)*7]] ];
 
-        self.sdl_renderer.set_draw_color(Color::RGB(100, 100, 100));
+        self.sdl_renderer.set_draw_color(Color::RGB(150, 150, 150));
 
         // draw intersections
         for i in 0..7 {
             for j in 0..7 {
-                // Only draw actual positions
+                // Skip empty intersections
                 if ((i == 0 || i == 6) && ((j > 0 && j < 3) || (j > 3 && j < 6))) ||
                    ((j == 0 || j == 6) && ((i > 0 && i < 3) || (i > 3 && i < 6))) ||
                    ((i == 1 || i == 5) && ((j == 2) || (j == 4))) ||
@@ -124,12 +134,46 @@ impl Game {
 
     fn draw_ui(&mut self) {
         // Draw turn into
-        let surface = self.sdl_font.render(&format!("{}{}{}", "Player ", self.turn, "'s turn")).blended(Color::RGBA(255, 0, 0, 255)).unwrap();
+        let surface = self.sdl_font.render(&format!("{}{}{}", "Player ", self.turn, "'s turn")).blended(self.players[self.turn as usize -1].colour).unwrap();
         let mut texture = self.sdl_renderer.create_texture_from_surface(&surface).unwrap();
         let TextureQuery { width, height, .. } = texture.query();
         let target = Rect::new(SCREEN_WIDTH as i32 - width as i32 - 10, 10, width, height);
 
         self.sdl_renderer.copy(&mut texture, None, Some(target));
+    }
+
+    fn get_closest_intersection(&self, pos: Vec<i32>) -> Vec<i32> {
+        let w = GAMEAREA_SIZE as i32;
+        let h = GAMEAREA_SIZE as i32;
+
+        let board = [ [vec![(w/8)*1,  h/8],    vec![(w/8)*2,  h/8],    vec![(w/8)*3,  h/8],    vec![(w/8)*4,  h/8],    vec![(w/8)*5,  h/8],    vec![(w/8)*6,  h/8],    vec![(w/8)*7,  h/8]],
+                      [vec![(w/8)*1, (h/8)*2], vec![(w/8)*2, (h/8)*2], vec![(w/8)*3, (h/8)*2], vec![(w/8)*4, (h/8)*2], vec![(w/8)*5, (h/8)*2], vec![(w/8)*6, (h/8)*2], vec![(w/8)*7, (h/8)*2]],
+                      [vec![(w/8)*1, (h/8)*3], vec![(w/8)*2, (h/8)*3], vec![(w/8)*3, (h/8)*3], vec![(w/8)*4, (h/8)*3], vec![(w/8)*5, (h/8)*3], vec![(w/8)*6, (h/8)*3], vec![(w/8)*7, (h/8)*3]],
+                      [vec![(w/8)*1, (h/8)*4], vec![(w/8)*2, (h/8)*4], vec![(w/8)*3, (h/8)*4], vec![(w/8)*4, (h/8)*4], vec![(w/8)*5, (h/8)*4], vec![(w/8)*6, (h/8)*4], vec![(w/8)*7, (h/8)*4]],
+                      [vec![(w/8)*1, (h/8)*5], vec![(w/8)*2, (h/8)*5], vec![(w/8)*3, (h/8)*5], vec![(w/8)*4, (h/8)*5], vec![(w/8)*5, (h/8)*5], vec![(w/8)*6, (h/8)*5], vec![(w/8)*7, (h/8)*5]],
+                      [vec![(w/8)*1, (h/8)*6], vec![(w/8)*2, (h/8)*6], vec![(w/8)*3, (h/8)*6], vec![(w/8)*4, (h/8)*6], vec![(w/8)*5, (h/8)*6], vec![(w/8)*6, (h/8)*6], vec![(w/8)*7, (h/8)*6]],
+                      [vec![(w/8)*1, (h/8)*7], vec![(w/8)*2, (h/8)*7], vec![(w/8)*3, (h/8)*7], vec![(w/8)*4, (h/8)*7], vec![(w/8)*5, (h/8)*7], vec![(w/8)*6, (h/8)*7], vec![(w/8)*7, (h/8)*7]] ];
+
+        let offset = 25;
+        for i in 0..7 {
+            for j in 0..7 {
+                // Skip empty intersections
+                if ((i == 0 || i == 6) && ((j > 0 && j < 3) || (j > 3 && j < 6))) ||
+                   ((j == 0 || j == 6) && ((i > 0 && i < 3) || (i > 3 && i < 6))) ||
+                   ((i == 1 || i == 5) && ((j == 2) || (j == 4))) ||
+                   ((j == 1 || j == 5) && ((i == 2) || (i == 4))) ||
+                   ((i == 3) && j == 3) {
+                    continue;
+                }
+
+                if (pos[0] - board[i][j][0]).abs() <= offset && (pos[1] - board[i][j][1]).abs() <= offset {
+                    return vec![board[i][j][0], board[i][j][1]];
+                }
+            }
+        }
+
+        // Not close enought to any intersection
+        return vec![];
     }
 }
 
@@ -151,7 +195,7 @@ fn main() {
     // font.set_style(sdl2_ttf::STYLE_BOLD);
 
     let mut g = Game {turn: 1, 
-        players: vec![player::new(9), player::new(9)], 
+        players: vec![player::new(Color::RGB(225, 50, 50)), player::new(Color::RGB(55, 50, 255))], 
         sdl_context: context, 
         sdl_renderer: renderer, 
         sdl_font: font};

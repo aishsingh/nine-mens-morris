@@ -3,19 +3,25 @@ extern crate sdl2;
 use piece;
 
 pub struct Player {
-    pieces_count: usize,
-    pieces: Vec<piece::Piece>
+    pub colour: sdl2::pixels::Color,
+    pieces: Vec<piece::Piece>,
+    pub total_pieces_count: usize
 }
 
 impl Player {
+    // Accessors
+    pub fn pieces_count(&self) -> usize { self.pieces.len() }
+
     pub fn draw_pieces(&self, renderer: &mut sdl2::render::Renderer) {
-        for i in 0..self.pieces_count {
+        renderer.set_draw_color(self.colour);
+        for i in 0..self.pieces_count() {
             self.pieces[i as usize].draw_piece(renderer);
         }
     }
 
-    pub fn add_piece(&self) {
-
+    pub fn add_piece(&mut self, p: piece::Piece) {
+        self.pieces.push(p);
+        self.total_pieces_count += 1;
     }
 
     pub fn remove_piece(&self) {
@@ -23,4 +29,4 @@ impl Player {
     }
 }
 
-pub fn new(pieces_count: usize) -> Player { Player { pieces_count: pieces_count, pieces: vec![piece::new(vec![0, 0]); pieces_count] } }
+pub fn new(colour: sdl2::pixels::Color) -> Player { Player { colour: colour, pieces: vec![], total_pieces_count: 0 } }
