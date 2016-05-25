@@ -1,34 +1,26 @@
-use std::collections::LinkedList;
-
 extern crate sdl2;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+
+use piece;
 
 pub struct Player {
-    pub pieces_count : u8
+    pieces_count: usize,
+    pieces: Vec<piece::Piece>
 }
 
-pub trait Piece_Actions {
-    fn draw_pieces(&self, renderer: &mut sdl2::render::Renderer);
-    fn add_piece(&self);
-    fn remove_piece(&self);
-}
-
-impl Piece_Actions for Player {
-    fn draw_pieces(&self, renderer: &mut sdl2::render::Renderer) {
-        for i in 1..self.pieces_count {
-            renderer.set_draw_color(Color::RGB(100, 100, 100));
-            renderer.fill_rect(Rect::new(100*(i as i32), 100, 50, 50));
+impl Player {
+    pub fn draw_pieces(&self, renderer: &mut sdl2::render::Renderer) {
+        for i in 0..self.pieces_count {
+            self.pieces[i as usize].draw_piece(renderer);
         }
     }
 
-    fn add_piece(&self) {
+    pub fn add_piece(&self) {
 
     }
 
-    fn remove_piece(&self) {
+    pub fn remove_piece(&self) {
 
     }
 }
 
-pub fn new(pieces: u8) -> Player { Player{pieces_count: pieces} }
+pub fn new(pieces_count: usize) -> Player { Player { pieces_count: pieces_count, pieces: vec![piece::new(vec![0, 0]); pieces_count] } }
