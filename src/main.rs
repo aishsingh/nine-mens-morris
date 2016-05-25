@@ -12,8 +12,11 @@ use std::path::Path;
 
 mod player;
 mod piece;
+mod action;
 
 use piece::PlacedPiece;
+use action::PlaceAction;
+
 
 static SCREEN_WIDTH: u32 = 800;
 static SCREEN_HEIGHT: u32 = 600;
@@ -62,20 +65,20 @@ impl Game {
                 },
 
                 Event::MouseButtonDown{x, y, ..} => {
-                    println!("Mouse Down {} {}", x, y);
+                    // println!("Mouse Down {} {}", x, y);
                 },
 
                 Event::MouseButtonUp{x, y, ..} => {
-                    println!("Mouse Up {} {}", x, y);
-
                     // Add up to 9 pieces
                     if self.players[self.turn as usize -1].total_pieces_count < 9 {
                         let inter: Vec<i32> = self.get_closest_inter(vec![x, y]);
-                        if !inter.is_empty() && self.is_inter_avail(vec![inter[0], inter[1]]) { // mouse was near available intersection
-                            let p = piece::new(vec![inter[2], inter[3]]);
-                            self.players[self.turn as usize -1].add_piece(p);
-                            self.board[inter[0] as usize][inter[1] as usize] = PlacedPiece::placed{p: p};
-                            self.turn = if self.turn == 2 {1} else {2};
+                        if !inter.is_empty() { // mouse was near intersection
+                            let p = piece::new(vec![inter[2], inter[3]], self.players[self.turn as usize -1].colour);
+
+                            if self.players[self.turn as usize -1].actions.place_piece(&p, &mut self.board, &inter) {
+                                self.players[self.turn as usize -1].add_piece(p);
+                                self.turn = if self.turn == 2 {1} else {2};
+                            }
                         }
                     }
                     else if self.selection_active {
@@ -189,12 +192,6 @@ impl Game {
         return vec![];
     }
 
-    fn is_inter_avail(&self, inter: Vec<i32>) -> bool {
-        match self.board[inter[0] as usize][inter[1] as usize] {
-            PlacedPiece::empty => true,
-            _ => false,
-        }
-    }
 }
 
 fn main() {
@@ -221,7 +218,7 @@ fn main() {
         sdl_renderer: renderer, 
         sdl_font: font,
         selection_active: false,
-        selected_piece: piece::new(vec![0, 0])};
+        selected_piece: piece::new(vec![0, 0], Color::RGB(0, 0, 0))};
 
     g.run();
 }

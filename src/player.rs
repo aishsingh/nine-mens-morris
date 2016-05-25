@@ -1,11 +1,15 @@
 extern crate sdl2;
 
 use piece;
+use action;
+use action::Action;
 
 pub struct Player {
     pub colour: sdl2::pixels::Color,
     pieces: Vec<piece::Piece>,
-    pub total_pieces_count: usize
+    pub total_pieces_count: usize,
+
+    pub actions: Action
 }
 
 impl Player {
@@ -13,7 +17,6 @@ impl Player {
     pub fn pieces_count(&self) -> usize { self.pieces.len() }
 
     pub fn draw_pieces(&self, renderer: &mut sdl2::render::Renderer) {
-        renderer.set_draw_color(self.colour);
         for i in 0..self.pieces_count() {
             self.pieces[i as usize].draw_piece(renderer);
         }
@@ -29,4 +32,4 @@ impl Player {
     }
 }
 
-pub fn new(colour: sdl2::pixels::Color) -> Player { Player { colour: colour, pieces: vec![], total_pieces_count: 0 } }
+pub fn new(colour: sdl2::pixels::Color) -> Player { Player { colour: colour, pieces: vec![], total_pieces_count: 0, actions: action::new() } }
